@@ -1,0 +1,32 @@
+{
+  "name": "rest-api",
+  "version": "1.0.0",
+  "description": "Learning to create a Rest API from zero with Node js and Express.",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test",
+    "start": "node --watch ./app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Alexandro02/Rest-API.git"
+  },
+  "keywords": [
+    "rest",
+    "api",
+    "test",
+    "learning",
+    "javascript",
+    "nodejs",
+    "express"
+  ],
+  "author": "Alexandro02",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Alexandro02/Rest-API/issues"
+  },
+  "homepage": "https://github.com/Alexandro02/Rest-API#readme",
+  "dependencies": {
+    "express": "^4.21.1"
+  }
+}
