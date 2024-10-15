@@ -8,7 +8,7 @@ npm install express
 ```
 
 ## Deployment
-To test this project simply clone this repository and run:
+To test this project simply clone this repository, cd into it and run:
 ```bash
 npm start
 ```
