@@ -1,11 +1,13 @@
 # Random Facts API
 
-This is an API that allows you either get, add, update or delete facts that you can use on little personal projects.## This project uses express.js, if you don't have it:
+This is an API that allows you either get, add, update or delete facts that you can use on little personal projects.
+
+## This project uses express.js, if you don't have it:
 ```bash
 npm install express
 ```
-## Deployment
 
+## Deployment
 To test this project simply clone this repository and run:
 ```bash
 npm start
