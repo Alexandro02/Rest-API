@@ -3,15 +3,28 @@ const morgan = require("morgan")
 const path = require("path")
 const fs = require("fs")
 const app = express()
+const { body, validationResult } = require("express-validator")
+// const isProduction = process.env.NODE_ENV === 'production' TODO: add env variables
 // Port for the app, if process.env.PORT is not defined, the app will redirect to port 3000
 const PORT = process.env.PORT || 3000
 
 // Set writing stream in append mode
 const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'))
 
-// Middleware setup
-app.use(express.json())
+// Morgan middleware setup TODO: add condition to check if production or development
+//  if (isProduction) {
+//   app.use(morgan("combined", { stream: accessLogStream }))
+// } else {
+//   app.use(morgan('dev', {
+//     skip: function (req, res) { return res.statusCode < 404 }
+//   }))
+// }
+// Express middleware setup
 app.use(morgan("combined", { stream: accessLogStream }))
+app.use(morgan('dev', {
+  skip: function (req, res) { return res.statusCode < 404 }
+}))
+app.use(express.json())
 
 const facts_list = [
   "Honey never spoils.",
@@ -24,8 +37,13 @@ const facts_list = [
   "There are more stars in the universe than grains of sand on Earth."
 ];
 
+/**
+ * Retrieves a small description of what the API does.
+ *
+ * @returns {Object} - A JSON response containing all of the endpoints available in the API.
+ */
 app.get("/", (req, res) => {
-  res.status(201).json(
+  res.status(200).json(
     {
       message: "Welcome to random fact API! ",
       endpoints:
@@ -39,67 +57,119 @@ app.get("/", (req, res) => {
     })
 })
 
-// First argument: endpoint
-// Second argument: {1: HTTP method, headers and request body, 2: Methods to send a response, send, json, render.}
+/**
+ * Retrieves just ONE fact stored in the `facts_list` array.
+ *
+ * @returns {Object} - A JSON response containing one fact.
+ */
 app.get("/getFact", (req, res) => {
   const randomIndex = Math.floor(Math.random() * facts_list.length)
   const randomFact = facts_list[randomIndex]
 
-  res.status(201).json({ fact: `${randomFact}` })
+  res.status(200).json({ fact: `${randomFact}` })
 })
 
+/**
+ * Retrieves all the facts stored in the `facts_list` array.
+ *
+ * @returns {Object} - A JSON response containing all the available facts.
+ */
 app.get("/getAllFacts", (req, res) => {
   if (facts_list === "") {
-    res.status(400).json({ error: "There are no facts right now!" })
+    res.status(404).json({ error: "There are no facts right now!" })
   } else {
-    res.status(201).json({ facts: facts_list })
+    res.status(200).json({ facts: facts_list })
   }
 })
 
-app.post("/addFact", (req, res) => {
-  const newFact = req.body.fact
+/**
+ * Adds a new fact to the facts_list array.
+ *
+ * @param {Object} req - The Express request object.
+ * @param {string} req.body.fact - The new fact to be added.
+ * @returns {Object} - A JSON response with a success message and the added fact.
+ */
+app.post("/addFact", body('fact')
+  .notEmpty().withMessage("Cannot add an empty fact.")
+  .isLength({ min: 10 }).withMessage("Fact must be at least 10 characters long."),
+  // Route handler
+  (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      return res.status(404).json({ errors: errors.array() })
+    }
+    const newFact = req.body.fact
+    // Validation for the request body
 
-  if (newFact === "" || newFact.length < 10) {
-    res.status(400).json({ error: "Fact must not be empty or it's too short." })
-  } else if (facts_list.includes(newFact)) {
-    res.status(400).json({ error: "Fact already exists." })
-  } else {
+    if (facts_list.includes(newFact)) {
+      return res.status(404).json({ error: "Fact already exists." })
+    }
+
     facts_list.push(newFact)
-    res.status(201).json({ message: "Fact added successfully.", fact: `${newFact}` })
+    res.status(200).json({ message: "Fact added successfully.", fact: `${newFact}` })
   }
-})
+)
 
-app.put("/updateFact/:index", (req, res) => {
-  const factIndex = parseInt(req.params.index)
-  const updatedFact = req.body.fact
+/**
+ * Updates a fact from the facts_list array.
+ *
+ * @param {Object} req - The Express request object.
+ * @param {string} req.body.fact - The new fact to be updated.
+ * @returns {Object} - A JSON response with a success message and the updated fact.
+ */
+app.put("/updateFact/:index", body('fact')
+  .notEmpty().withMessage("Cannot update a non existing fact")
+  .isLength({ min: 10 }).withMessage("Fact must be at least 10 characters long"),
+  (req, res) => {
+    const updatedFact = req.body.fact
+    const errors = validationResult(req)
+    const factIndex = parseInt(req.params.index)
+    const oldFact = facts_list[factIndex]
+    const existingFactIndex = facts_list.findIndex((index) => index === updatedFact);
 
-  if (updatedFact === "" || updatedFact.length < 10) {
-    res.status(400).json({ error: "Fact must not be empty or it's too short." })
+    if (!errors.isEmpty()) {
+      return res.status(404).json({ errors: errors.array() })
+    }
+
+    if (existingFactIndex !== -1 && existingFactIndex !== factIndex) {
+      return res.status(400).json({ error: "Fact already exists at a different index." });
+    }
+
+    facts_list[factIndex] = updatedFact
+    res.status(200).json({ message: "Fact successfully updated", updated_fact: `${updatedFact}`, old_fact: `${oldFact}` })
   }
-  if (factIndex < 0 || factIndex >= facts_list.length) {
-    res.status(400).json({ error: "Fact not found." })
+)
+
+/**
+ * Deletes a fact from the facts_list array.
+ *
+ * @param {Object} req - The Express request object.
+ * @param {string} req.body.fact - The new fact to be deleted.
+ * @returns {Object} -  JSON response with a success message and the deleted fact.
+ */
+app.delete("/deleteFact/:index", body('index')
+  .isEmpty().withMessage("Cannot delete a non existing fact"),
+  (req, res) => {
+    const factIndex = req.params.index
+    const errors = validationResult(req)
+    const deletedFact = facts_list.splice(factIndex, 1)
+
+    if (!errors.isEmpty()) {
+      return res.status(404).json({ errors: errors.array() })
+    }
+
+    if (factIndex < 0 || factIndex >= facts_list.length) {
+      return res.status(404).json({ error: "Fact not found." })
+    }
+
+    res.status(200).json({ message: "Fact deleted successfully!", fact: deletedFact[0] })
   }
-  if (facts_list.includes(updatedFact)) {
-    res.status(400).json({ error: "Fact already exists." })
-  }
+)
 
-  facts_list[factIndex] = updatedFact
-  res.status(201).json({ message: "Fact successfully updated", fact: `${updatedFact}` })
-
-})
-
-app.delete("/deleteFact/:index", (req, res) => {
-  const factIndex = req.params.index
-
-  if (factIndex < 0 || factIndex >= facts_list.length) {
-    return res.status(404).json({ error: "Fact not found." });
-  } else {
-    const deletedFact = facts_list.splice(factIndex, 1);
-    res.json({ message: "Fact deleted successfully!", fact: deletedFact[0] });
-  }
-
-})
-
+/**
+ * Turns on the API on the declared port.
+ *
+ */
 app.listen(PORT, () => {
   console.log(`App listening on port: ${PORT}`)
 })
