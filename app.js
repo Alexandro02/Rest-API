@@ -1,9 +1,17 @@
 const express = require("express")
+const morgan = require("morgan")
+const path = require("path")
+const fs = require("fs")
 const app = express()
 // Port for the app, if process.env.PORT is not defined, the app will redirect to port 3000
 const PORT = process.env.PORT || 3000
 
+// Set writing stream in append mode
+const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'))
+
+// Middleware setup
 app.use(express.json())
+app.use(morgan("combined", { stream: accessLogStream }))
 
 const facts_list = [
   "Honey never spoils.",
