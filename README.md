@@ -7,6 +7,12 @@ This is an API that allows you either get, add, update or delete facts that you 
 npm install express
 ```
 
+## Then run:
+```bash
+npm install
+```
+## To update packages and ensure everything works as expected
+
 ## Deployment
 To test this project simply clone this repository, cd into it and run:
 ```bash
