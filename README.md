@@ -2,9 +2,9 @@
 
 This is an API that allows you either get, add, update or delete facts that you can use on little personal projects.
 
-## This project uses express.js, if you don't have it:
+## This project uses express.js and morgan, if you don't have it:
 ```bash
-npm install express
+npm install express morgan
 ```
 
 ## Then run:
