@@ -4,21 +4,12 @@ const path = require("path")
 const fs = require("fs")
 const app = express()
 const { body, validationResult } = require("express-validator")
-// const isProduction = process.env.NODE_ENV === 'production' TODO: add env variables
 // Port for the app, if process.env.PORT is not defined, the app will redirect to port 3000
 const PORT = process.env.PORT || 3000
 
 // Set writing stream in append mode
 const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'))
 
-// Morgan middleware setup TODO: add condition to check if production or development
-//  if (isProduction) {
-//   app.use(morgan("combined", { stream: accessLogStream }))
-// } else {
-//   app.use(morgan('dev', {
-//     skip: function (req, res) { return res.statusCode < 404 }
-//   }))
-// }
 // Express middleware setup
 app.use(morgan("combined", { stream: accessLogStream }))
 app.use(morgan('dev', {
@@ -65,6 +56,11 @@ app.get("/", (req, res) => {
 app.get("/getFact", (req, res) => {
   const randomIndex = Math.floor(Math.random() * facts_list.length)
   const randomFact = facts_list[randomIndex]
+  const errors = validationResult(req)
+
+  if (!errors.isEmpty()) {
+    return res.status(404).json({ errors: errors.array() })
+  }
 
   res.status(200).json({ fact: `${randomFact}` })
 })
@@ -75,12 +71,15 @@ app.get("/getFact", (req, res) => {
  * @returns {Object} - A JSON response containing all the available facts.
  */
 app.get("/getAllFacts", (req, res) => {
-  if (facts_list === "") {
-    res.status(404).json({ error: "There are no facts right now!" })
-  } else {
-    res.status(200).json({ facts: facts_list })
+  const errors = validationResult(req)
+
+  if (!errors.isEmpty()) {
+    return res.status(404).json({ errors: errors.array() })
   }
+
+  res.status(200).json({ facts: facts_list })
 })
+
 
 /**
  * Adds a new fact to the facts_list array.
