@@ -28,6 +28,7 @@
   "homepage": "https://github.com/Alexandro02/Rest-API#readme",
   "dependencies": {
     "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "express-validator": "^7.2.0",
     "morgan": "^1.10.0"

@@ -5,19 +5,30 @@ const cors = require("cors")
 const path = require("path")
 const fs = require("fs")
 const app = express()
-// Port for the app, if process.env.PORT is not defined, the app will redirect to port 3000
+
+// Load environment variables from .env file
+require('dotenv').config()
+
+// If PORT var is not in .env file, start on port 3000
 const PORT = process.env.PORT || 3000
 
 // Set writing stream in append mode
-// const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'))
+const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'))
 
 // Set allowed origins for CORS
-const allowedOrigins = []
-// Express middleware setup
-app.use(morgan("combined", { stream: accessLogStream }))
-app.use(morgan('dev', {
-  skip: function (req, res) { return res.statusCode < 404 }
-}))
+// const allowedOrigins = []
+
+// Morgan logging setup
+if (process.env.ENV === 'production') {
+  app.use(morgan("combined", { stream: accessLogStream }))
+} else {
+  app.use(morgan('dev', {
+    skip: function (req, res) { return res.statusCode < 404 }
+  }))
+}
+
+
+// CORS middleware setup
 // app.use(cors({
 //   origin: (origin, callback) => {
 //     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
@@ -28,6 +39,8 @@ app.use(morgan('dev', {
 //   },
 //  methods: ['GET', 'POST', 'PUT'],
 // }))
+
+// Express middleware setup
 app.use(express.json())
 
 const facts_list = [
