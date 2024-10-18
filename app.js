@@ -1,20 +1,33 @@
+const { body, validationResult } = require("express-validator")
 const express = require("express")
 const morgan = require("morgan")
+const cors = require("cors")
 const path = require("path")
 const fs = require("fs")
 const app = express()
-const { body, validationResult } = require("express-validator")
 // Port for the app, if process.env.PORT is not defined, the app will redirect to port 3000
 const PORT = process.env.PORT || 3000
 
 // Set writing stream in append mode
-const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'))
+// const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'))
 
+// Set allowed origins for CORS
+const allowedOrigins = []
 // Express middleware setup
 app.use(morgan("combined", { stream: accessLogStream }))
 app.use(morgan('dev', {
   skip: function (req, res) { return res.statusCode < 404 }
 }))
+// app.use(cors({
+//   origin: (origin, callback) => {
+//     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+//       callback(null, true)
+//     } else {
+//       callback(new Error("Not allowed by CORS"))
+//     }
+//   },
+//  methods: ['GET', 'POST', 'PUT'],
+// }))
 app.use(express.json())
 
 const facts_list = [
